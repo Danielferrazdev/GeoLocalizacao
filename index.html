@@ -43,13 +43,17 @@
         }
 
         #alertaLocalizacao {
-            background: #ffcc00;
-            color: #333;
-            padding: 10px 16px;
+            display: none;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 16px;
+            border: 2px solid #ffeeba;
+            border-radius: 10px;
+            font-size: 16px;
             text-align: center;
-            font-weight: bold;
-            font-size: 15px;
+            margin: 20px;
         }
+
     </style>
 </head>
 
@@ -87,6 +91,34 @@
             iconAnchor: [15, 30],
             popupAnchor: [0, -30]
         });
+        const alertaDiv = document.getElementById("alertaLocalizacao");
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    // Sucesso! Você pode continuar com o uso do mapa aqui
+                    alertaDiv.style.display = "none"; // esconde o aviso se estava visível
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // ... código para buscar a UPA ...
+                },
+                function (error) {
+                    // Erro ao tentar obter a localização
+                    console.warn("Erro ao obter localização:", error.message);
+                    alertaDiv.style.display = "block"; // mostra o aviso
+                },
+                {
+                    timeout: 10000 // tempo de espera para resposta
+                }
+            );
+        } else {
+            // Geolocalização não suportada
+            alertaDiv.innerText = "⚠️ Seu navegador não suporta geolocalização.";
+            alertaDiv.style.display = "block";
+        }
+
+
 
         navigator.geolocation.getCurrentPosition(function (position) {
             const lat = position.coords.latitude;
