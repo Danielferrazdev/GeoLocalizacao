@@ -99,7 +99,7 @@
             map.setView([lat, lng], 15);
 
             const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];
-        node["amenity"="hospital"]["name"~"UPA",i](around:5000,${lat},${lng});
+        node["amenity"="hospital"]["name"~"UPA",i](around:10000,${lat},${lng});
         out;`;
 
             fetch(overpassUrl)
