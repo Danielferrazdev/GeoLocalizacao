@@ -106,7 +106,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.elements.length === 0) {
-                        info.textContent = "❌ Nenhuma UPA encontrada num raio de 5 km.";
+                        info.textContent = "❌ Nenhuma UPA encontrada num raio de 10 km.";
                         return;
                     }
 
