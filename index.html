@@ -49,6 +49,8 @@
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
         }
 
         @keyframes spin {
@@ -103,7 +105,10 @@
                         new google.maps.Marker({
                             position: userLocation,
                             map,
-                            title: "Você está aqui"
+                            title: "Você está aqui",
+                            icon: {
+                                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                            }
                         });
                         findNearbyUPAs();
                     },
@@ -136,14 +141,29 @@
             placesService.nearbySearch(
                 {
                     location: userLocation,
-                    radius: 5000,
+                    radius: 5000,  // Raio de 5km
                     keyword: "UPA",
                     type: "hospital"
                 },
                 (results, status) => {
                     if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-                        const nearestUPA = results[0];
-                        showUPAInfo(nearestUPA);
+                        // Calcula a distância para cada UPA e ordena pela mais próxima
+                        const upasComDistancia = results.map(upa => {
+                            const distancia = calcularDistancia(
+                                userLocation.lat,
+                                userLocation.lng,
+                                upa.geometry.location.lat(),
+                                upa.geometry.location.lng()
+                            );
+                            return { ...upa, distancia };
+                        }).sort((a, b) => a.distancia - b.distancia);
+
+                        // Pega a UPA mais próxima (primeira do array ordenado)
+                        const upaMaisProxima = upasComDistancia[0];
+                        showUPAInfo(upaMaisProxima);
+
+                        // Opcional: Mostrar todas as UPAs encontradas (para debug)
+                        console.log("Todas as UPAs encontradas:", upasComDistancia);
                     } else {
                         updateStatus("Nenhuma UPA encontrada nas proximidades.", false);
                     }
@@ -154,11 +174,15 @@
         function showUPAInfo(upa) {
             const destino = upa.geometry.location;
             const nome = upa.name;
+            const endereco = upa.vicinity || "Endereço não disponível";
 
             new google.maps.Marker({
                 position: destino,
                 map,
-                title: nome
+                title: nome,
+                icon: {
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                }
             });
 
             directionsService.route(
@@ -171,12 +195,26 @@
                     if (status === "OK") {
                         directionsRenderer.setDirections(response);
                         const tempo = response.routes[0].legs[0].duration.text;
-                        updateStatus(`🕒 Tempo estimado até "${nome}": ${tempo}`, false);
+                        const distanciaRota = response.routes[0].legs[0].distance.text;
+                        updateStatus(`🏥 UPA mais próxima: ${nome} (${distanciaRota}) - 🕒 Tempo estimado: ${tempo}`, false);
                     } else {
                         updateStatus("Erro ao traçar rota.", false);
                     }
                 }
             );
+        }
+
+        // Função para calcular distância entre dois pontos (fórmula de Haversine)
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raio da Terra em km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distância em km
         }
 
         function updateStatus(message, isLoading) {
@@ -186,6 +224,7 @@
         }
     </script>
 
+    <!-- Substitua SUA_CHAVE_AQUI pela sua chave real da API Google Maps -->
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsE4MHqIc8tmMeWYuO44qhoSad4eZ41qw&libraries=places&callback=initMap">
     </script>
